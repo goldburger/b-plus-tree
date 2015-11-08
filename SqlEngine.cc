@@ -134,23 +134,36 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
     //Open a file 
     ifstream file;
-    file.open(loadfile);
+    file.open(loadfile.c_str());
     if (!file.is_open());
         exit(RC_FILE_OPEN_FAILED);
     string line;
 
-    //For each line of the file extract valie and key and insert into 
+    //Open target RecordFile
+    RecordFile rf;
+    const string recordName = table + ".tbl";
+    rf.open(recordName, 'w');
+
+    //For each line of the file extract value and key and insert into 
     //the table
     while (getline(file, line))
     {
         int key;
         string value;
-        if (parseLoadLine(line, key, value) < 0 ) //IF parseLoadLine returns error
+        //If parseLoadLine returns error
+        if (parseLoadLine(line, key, value) < 0 ) {
+            rf.close();
             exit(RC_FILE_SEEK_FAILED);
+        }
         
-        //TODO: values extrcted now put them into the RecordFile Table
-        
+        //Insert each value and key into the RecordFile table
+        RecordId lastRid = rf.endRid();
+        if (rf.append(key, value, lastRid) < 0) {
+            rf.close();
+            exit(RC_FILE_WRITE_FAILED);
+        }
     }
+    rf.close();
     return 0;
 }
 
