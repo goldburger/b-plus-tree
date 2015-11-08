@@ -132,9 +132,26 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
-  /* your code here */
+    //Open a file 
+    ifstream file;
+    file.open(loadfile);
+    if (!file.is_open());
+        exit(RC_FILE_OPEN_FAILED);
+    string line;
 
-  return 0;
+    //For each line of the file extract valie and key and insert into 
+    //the table
+    while (getline(file, line))
+    {
+        int key;
+        string value;
+        if (parseLoadLine(line, key, value) < 0 ) //IF parseLoadLine returns error
+            exit(RC_FILE_SEEK_FAILED);
+        
+        //TODO: values extrcted now put them into the RecordFile Table
+        
+    }
+    return 0;
 }
 
 RC SqlEngine::parseLoadLine(const string& line, int& key, string& value)
