@@ -135,7 +135,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     //Open a file 
     ifstream file;
     file.open(loadfile.c_str());
-    if (!file.is_open());
+    if (!file.is_open())
         exit(RC_FILE_OPEN_FAILED);
     string line;
 
