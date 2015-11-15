@@ -6,7 +6,7 @@
 
 using namespace std;
 
-#define MAX_KEYS 70
+#define MAX_KEYS 75
 
 void reportErrorExit(RC error) {
     printf("Error! Received RC code%d\n", error);
@@ -163,7 +163,21 @@ RC BTLeafNode::locate(int searchKey, int& eid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
-{ return 0; }
+{
+    // Note: node entries are indexed starting from zero, length starts from 1
+    if (eid >= length)
+        return RC_NO_SUCH_RECORD;
+    
+    std::list<int>::iterator keyIt = keys.begin();
+    std::list<RecordId>::iterator recIt = records.begin();
+    for (int i = 0; i < eid; i++) {
+        keyIt++;
+        recIt++;
+    }
+    key = *keyIt;
+    rid = *recIt;
+    return 0;
+}
 
 /*
  * Return the pid of the next slibling node.
