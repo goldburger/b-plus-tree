@@ -10,6 +10,7 @@
 #ifndef BTREENODE_H
 #define BTREENODE_H
 
+#include <list>
 #include "RecordFile.h"
 #include "PageFile.h"
 
@@ -99,6 +100,12 @@ class BTLeafNode {
     RC write(PageId pid, PageFile& pf);
 
   private:
+	int isLeaf;
+    int length;
+    PageId nextLeaf;
+    list<RecordId> records;
+    list<int> keys;
+    PageId parent;
    /**
     * The main memory buffer for loading the content of the disk page 
     * that contains the node.

@@ -2,6 +2,11 @@
 
 using namespace std;
 
+void reportErrorExit(RC error) {
+    printf("Error! Received RC code%d\n", error);
+    exit(RC);
+}
+
 /*
  * Read the content of the node from the page pid in the PageFile pf.
  * @param pid[IN] the PageId to read
@@ -9,7 +14,19 @@ using namespace std;
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
-{ return 0; }
+{
+    RC errorCode = pf.read(pid, buffer);
+    if (errorCode < 0)
+        reportErrorExit(errorCode);
+
+    /* WIP TODO */
+    int bufferIndex = 0;
+    length = *(int *)(buffer);
+    bufferIndex += sizeof(int);
+    for (int i = 0; i < length; i++) {
+		//records.push_back(
+    }
+}
     
 /*
  * Write the content of the node to the page pid in the PageFile pf.
