@@ -1,10 +1,16 @@
+#include <list>
+#include <cstdio>
+#include <cstdlib>
+#include <string.h>
 #include "BTreeNode.h"
 
 using namespace std;
 
+#define MAX_KEYS 70
+
 void reportErrorExit(RC error) {
     printf("Error! Received RC code%d\n", error);
-    exit(RC);
+    exit(error);
 }
 
 /*
@@ -15,17 +21,31 @@ void reportErrorExit(RC error) {
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
 {
+    // Assumes pf is opened before & closed after by caller, as this needs file name
+    // Is this assumption valid?
     RC errorCode = pf.read(pid, buffer);
     if (errorCode < 0)
         reportErrorExit(errorCode);
 
-    /* WIP TODO */
     int bufferIndex = 0;
-    length = *(int *)(buffer);
+    memcpy(&isLeaf, buffer + bufferIndex, sizeof(int));
+    bufferIndex += sizeof(int);
+    memcpy(&length, buffer + bufferIndex, sizeof(int));
     bufferIndex += sizeof(int);
     for (int i = 0; i < length; i++) {
-		//records.push_back(
+        RecordId nextRecord;
+        memcpy(&nextRecord, buffer + bufferIndex, sizeof(RecordId));
+        bufferIndex += sizeof(RecordId);
+        records.push_back(nextRecord);
+        int nextKey;
+        memcpy(&nextKey, buffer + bufferIndex, sizeof(int));
+        bufferIndex += sizeof(int);
+        keys.push_back(nextKey);
     }
+    memcpy(&parent, buffer + bufferIndex, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
+    memcpy(&nextLeaf, buffer + bufferIndex, sizeof(PageId));
+    return 0;
 }
     
 /*
@@ -35,14 +55,42 @@ RC BTLeafNode::read(PageId pid, const PageFile& pf)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::write(PageId pid, PageFile& pf)
-{ return 0; }
+{
+    char* mem = (char *)malloc(PageFile::PAGE_SIZE);
+    int bufferIndex = 0;
+    memcpy(mem + bufferIndex, &isLeaf, sizeof(int));
+    bufferIndex += sizeof(int);
+    memcpy(mem + bufferIndex, &length, sizeof(int));
+    bufferIndex += sizeof(int);
+    std::list<RecordId>::iterator recIt = records.begin();
+    std::list<int>::iterator keyIt = keys.begin();
+    for (int i = 0; i < length; i++) {
+        memcpy(mem + bufferIndex, &*recIt, sizeof(RecordId));
+        bufferIndex += sizeof(RecordId);
+        memcpy(mem + bufferIndex, &*keyIt, sizeof(int));
+        bufferIndex += sizeof(int);
+        recIt++;
+        keyIt++;
+    }
+    memcpy(mem + bufferIndex, &parent, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
+    memcpy(mem + bufferIndex, &nextLeaf, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
+    RC errorCode = pf.write(pid, mem);
+    free(mem);
+    if (errorCode < 0)
+        reportErrorExit(errorCode);
+    return 0;
+}
 
 /*
  * Return the number of keys stored in the node.
  * @return the number of keys in the node
  */
 int BTLeafNode::getKeyCount()
-{ return 0; }
+{
+    return length;
+}
 
 /*
  * Insert a (key, rid) pair to the node.
@@ -51,7 +99,33 @@ int BTLeafNode::getKeyCount()
  * @return 0 if successful. Return an error code if the node is full.
  */
 RC BTLeafNode::insert(int key, const RecordId& rid)
-{ return 0; }
+{
+    if (length >= MAX_KEYS)
+        return RC_NODE_FULL;
+    else
+    {
+        int index = 0;
+        std::list<int>::iterator it;
+        for(it = keys.begin(); it != keys.end(); it++) {
+            if (*it < key) {
+                index++;
+            }
+            else
+                break;
+        }
+        keys.insert(it, key);
+        std::list<RecordId>::iterator recIt;
+        for (int i = 0; i < index; i++) {
+            recIt++;
+        }
+        RecordId newRec;
+        newRec.pid = rid.pid;
+        newRec.sid = rid.sid;
+        records.insert(recIt, newRec);
+        length++;
+    }
+    return 0;
+}
 
 /*
  * Insert the (key, rid) pair to the node
@@ -96,7 +170,9 @@ RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
  * @return the PageId of the next sibling node 
  */
 PageId BTLeafNode::getNextNodePtr()
-{ return 0; }
+{
+    return nextLeaf;
+}
 
 /*
  * Set the pid of the next slibling node.
@@ -104,7 +180,10 @@ PageId BTLeafNode::getNextNodePtr()
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTLeafNode::setNextNodePtr(PageId pid)
-{ return 0; }
+{
+    nextLeaf = pid;
+    return 0;
+}
 
 /*
  * Read the content of the node from the page pid in the PageFile pf.
