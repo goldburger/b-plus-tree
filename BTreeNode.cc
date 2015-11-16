@@ -206,7 +206,34 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
-{ return 0; }
+{
+    // Assumes pf is opened before & closed after by caller, as this needs file name
+    // Is this assumption valid?
+    RC errorCode = pf.read(pid, buffer);
+    if (errorCode < 0)
+        reportErrorExit(errorCode);
+
+    int bufferIndex = 0;
+    memcpy(&isLeaf, buffer + bufferIndex, sizeof(int));
+    bufferIndex += sizeof(int);
+    memcpy(&length, buffer + bufferIndex, sizeof(int));
+    bufferIndex += sizeof(int);
+    for (int i = 0; i < length; i++) {
+        PageId nextPage;
+        memcpy(&nextPage, buffer + bufferIndex, sizeof(PageId));
+        bufferIndex += sizeof(PageId);
+        records.push_back(nextPage);
+        int nextKey;
+        memcpy(&nextKey, buffer + bufferIndex, sizeof(int));
+        bufferIndex += sizeof(int);
+        keys.push_back(nextKey);
+    }
+    memcpy(&parent, buffer + bufferIndex, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
+    memcpy(&nextLeaf, buffer + bufferIndex, sizeof(PageId));
+    return 0;
+
+}
     
 /*
  * Write the content of the node to the page pid in the PageFile pf.
