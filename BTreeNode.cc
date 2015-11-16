@@ -265,7 +265,7 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
  */
 RC BTNonLeafNode::write(PageId pid, PageFile& pf)
 {
-    memset(buffer, 0, sizeof(PageFile::PAGE_SIZE * sizeof(char)));    
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
     int bufferIndex = 0;
     memcpy(buffer + bufferIndex, &isLeaf, sizeof(int));
     bufferIndex += sizeof(int);
@@ -347,7 +347,7 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
             pageIt++;
         }
         pageIt--; //since leftmostPid is not in the vector the page iterator will always be one greater. 
-        pid = pageIt;
+        pid = *pageIt;
     }
     return 0;
 }
@@ -362,15 +362,15 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
 { 
     //Clear buffer
-    memset(buffer, 0, sizeof(PageFile::PAGE_SIZE * sizeof(char)));
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
     pages.clear();
     keys.clear();
 
     isLeaf = 0;
     length = 1;
     leftMostPageId = pid1;
-    keys.insert(key);
-    pages.insert(pid2);
+    keys.push_back(key);
+    pages.push_back(pid2);
     parent = -1;    
     //Where do we write this to?     
     return 0;
