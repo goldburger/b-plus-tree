@@ -228,6 +228,8 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
         bufferIndex += sizeof(int);
         keys.push_back(nextKey);
     }
+    memcpy(&rightMostPageId, buffer + bufferIndex, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
     memcpy(&parent, buffer + bufferIndex, sizeof(PageId));
     bufferIndex += sizeof(PageId);
     return 0;
@@ -257,6 +259,8 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
         pageIt++;
         keyIt++;
     }
+    memcpy(buffer + bufferIndex, &rightMostPageId, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
     memcpy(buffer + bufferIndex, &parent, sizeof(PageId));
     bufferIndex += sizeof(PageId);
     RC errorCode = pf.write(pid, buffer);
@@ -313,12 +317,13 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 
     while (keyIt != keys.end() && searchKey > *keyIt)
     {
-        if (pageIt == pages.end())
-            return -1; ///TO DO: Find a better error message, but this should not happen
         keyIt++;
         pageIt++;
     }
-    pid = *pageIt;
+    if (keyIt == keys.end()) //If I exited the loop because the searchKey was greater than all other keys, I need to set pid to the rightmostPageId 
+        pid = rightMostPageId;
+    else
+        pid = *pageIt;
     return 0;
 }
 
@@ -330,4 +335,9 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
-{ return 0; }
+{ 
+    //Clear buffer
+    memset(buffer, 0, sizeof(PageFile::PAGE_SIZE * sizeof(char))); 
+    //TODO: Add the actual initialization later
+    return 0;
+}
