@@ -21,8 +21,6 @@ void reportErrorExit(RC error) {
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
 {
-    // Assumes pf is opened before & closed after by caller, as this needs file name
-    // Is this assumption valid?
     RC errorCode = pf.read(pid, buffer);
     if (errorCode < 0)
         reportErrorExit(errorCode);
@@ -56,28 +54,27 @@ RC BTLeafNode::read(PageId pid, const PageFile& pf)
  */
 RC BTLeafNode::write(PageId pid, PageFile& pf)
 {
-    char* mem = (char *)malloc(PageFile::PAGE_SIZE);
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
     int bufferIndex = 0;
-    memcpy(mem + bufferIndex, &isLeaf, sizeof(int));
+    memcpy(buffer + bufferIndex, &isLeaf, sizeof(int));
     bufferIndex += sizeof(int);
-    memcpy(mem + bufferIndex, &length, sizeof(int));
+    memcpy(buffer + bufferIndex, &length, sizeof(int));
     bufferIndex += sizeof(int);
     std::list<RecordId>::iterator recIt = records.begin();
     std::list<int>::iterator keyIt = keys.begin();
     for (int i = 0; i < length; i++) {
-        memcpy(mem + bufferIndex, &*recIt, sizeof(RecordId));
+        memcpy(buffer + bufferIndex, &*recIt, sizeof(RecordId));
         bufferIndex += sizeof(RecordId);
-        memcpy(mem + bufferIndex, &*keyIt, sizeof(int));
+        memcpy(buffer + bufferIndex, &*keyIt, sizeof(int));
         bufferIndex += sizeof(int);
         recIt++;
         keyIt++;
     }
-    memcpy(mem + bufferIndex, &parent, sizeof(PageId));
+    memcpy(buffer + bufferIndex, &parent, sizeof(PageId));
     bufferIndex += sizeof(PageId);
-    memcpy(mem + bufferIndex, &nextLeaf, sizeof(PageId));
+    memcpy(buffer + bufferIndex, &nextLeaf, sizeof(PageId));
     bufferIndex += sizeof(PageId);
-    RC errorCode = pf.write(pid, mem);
-    free(mem);
+    RC errorCode = pf.write(pid, buffer);
     if (errorCode < 0)
         reportErrorExit(errorCode);
     return 0;
