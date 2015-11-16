@@ -190,11 +190,11 @@ class BTNonLeafNode {
     std::list<PageId> pages;
     std::list<int> keys;
     PageId parent;
-    PageId rightMostPageId;
+    PageId leftMostPageId;
 
     /*The structure for non leaf nodes pages  will look like so:
 
-        isLeaf, length(# of key/pageId pairs), PageId0, key0, PageId1, ..., rightmost PageId, parent ParentId
+        isLeaf, length, leftMostPageId , key0, PageId1, ..., parent Parent Pid
     */
    /**
     * The main memory buffer for loading the content of the disk page 

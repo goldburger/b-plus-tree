@@ -215,6 +215,8 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
     bufferIndex += sizeof(int);
     memcpy(&length, buffer + bufferIndex, sizeof(int));
     bufferIndex += sizeof(int);
+    memcpy(&leftMostPageId, buffer + bufferIndex, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
     for (int i = 0; i < length; i++) {
         PageId nextPage;
         memcpy(&nextPage, buffer + bufferIndex, sizeof(PageId));
@@ -225,8 +227,6 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
         bufferIndex += sizeof(int);
         keys.push_back(nextKey);
     }
-    memcpy(&rightMostPageId, buffer + bufferIndex, sizeof(PageId));
-    bufferIndex += sizeof(PageId);
     memcpy(&parent, buffer + bufferIndex, sizeof(PageId));
     bufferIndex += sizeof(PageId);
     return 0;
@@ -240,12 +240,14 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
  */
 RC BTNonLeafNode::write(PageId pid, PageFile& pf)
 {
-    memset(buffer, 0, sizeof(PageFile::PAGE_SIZE * sizeof(char))); 
+    memset(buffer, 0, sizeof(PageFile::PAGE_SIZE * sizeof(char)));    
     int bufferIndex = 0;
     memcpy(buffer + bufferIndex, &isLeaf, sizeof(int));
     bufferIndex += sizeof(int);
     memcpy(buffer + bufferIndex, &length, sizeof(int));
     bufferIndex += sizeof(int);
+    memcpy(buffer + bufferIndex, &leftMostPageId, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
     std::list<PageId>::iterator pageIt = pages.begin();
     std::list<int>::iterator keyIt = keys.begin();
     for (int i = 0; i < length; i++) {
@@ -256,8 +258,6 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
         pageIt++;
         keyIt++;
     }
-    memcpy(buffer + bufferIndex, &rightMostPageId, sizeof(PageId));
-    bufferIndex += sizeof(PageId);
     memcpy(buffer + bufferIndex, &parent, sizeof(PageId));
     bufferIndex += sizeof(PageId);
     RC errorCode = pf.write(pid, buffer);
@@ -312,15 +312,18 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
     std::list<int>::iterator keyIt = keys;
     std::list<PageId>::iterator pageIt = pages;
 
-    while (keyIt != keys.end() && searchKey > *keyIt)
-    {
-        keyIt++;
-        pageIt++;
-    }
-    if (keyIt == keys.end()) //If I exited the loop because the searchKey was greater than all other keys, I need to set pid to the rightmostPageId 
-        pid = rightMostPageId;
+    if (searchKey < *keyIt)
+        pid = leftMostPageId;
     else
-        pid = *pageIt;
+    {
+        while (keyIt != keys.end() && searchKey >= *keyIt)
+        {
+            keyIt++;
+            pageIt++;
+        }
+        pageIt--; //since leftmostPid is not in the vector the page iterator will always be one greater. 
+        pid = pageIt;
+    }
     return 0;
 }
 
@@ -334,7 +337,16 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
 { 
     //Clear buffer
-    memset(buffer, 0, sizeof(PageFile::PAGE_SIZE * sizeof(char))); 
-    //TODO: Add the actual initialization later
+    memset(buffer, 0, sizeof(PageFile::PAGE_SIZE * sizeof(char)));
+    pages.clear();
+    keys.clear();
+
+    isLeaf = 0;
+    length = 1;
+    leftMostPageId = pid1;
+    keys.insert(key);
+    pages.insert(pid2);
+    
+    //Where do we write this to?     
     return 0;
 }
