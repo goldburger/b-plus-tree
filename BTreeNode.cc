@@ -334,8 +334,8 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 { 
     int keyIndex = 0;
-    std::list<int>::iterator keyIt = keys;
-    std::list<PageId>::iterator pageIt = pages;
+    std::list<int>::iterator keyIt = keys.begin();
+    std::list<PageId>::iterator pageIt = pages.begin();
 
     while (keyIt != keys.end() && searchKey > *keyIt)
     {
