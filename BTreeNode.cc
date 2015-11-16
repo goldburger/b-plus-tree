@@ -371,7 +371,7 @@ RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
     leftMostPageId = pid1;
     keys.insert(key);
     pages.insert(pid2);
-    
+    parent = -1;    
     //Where do we write this to?     
     return 0;
 }
