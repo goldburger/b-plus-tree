@@ -184,6 +184,12 @@ class BTNonLeafNode {
     RC write(PageId pid, PageFile& pf);
 
   private:
+    
+    int isLeaf;
+    int length;
+    std::list<PageId> pages;
+    std::list<int> keys;
+    PageId parent;
    /**
     * The main memory buffer for loading the content of the disk page 
     * that contains the node.

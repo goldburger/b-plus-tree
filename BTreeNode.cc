@@ -203,7 +203,32 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
-{ return 0; }
+{
+    // Assumes pf is opened before & closed after by caller, as this needs file name
+    // Is this assumption valid?
+    RC errorCode = pf.read(pid, buffer);
+    if (errorCode < 0)
+        reportErrorExit(errorCode);
+
+    int bufferIndex = 0;
+    memcpy(&isLeaf, buffer + bufferIndex, sizeof(int));
+    bufferIndex += sizeof(int);
+    memcpy(&length, buffer + bufferIndex, sizeof(int));
+    bufferIndex += sizeof(int);
+    for (int i = 0; i < length; i++) {
+        PageId nextPage;
+        memcpy(&nextPage, buffer + bufferIndex, sizeof(PageId));
+        bufferIndex += sizeof(PageId);
+        pages.push_back(nextPage);
+        int nextKey;
+        memcpy(&nextKey, buffer + bufferIndex, sizeof(int));
+        bufferIndex += sizeof(int);
+        keys.push_back(nextKey);
+    }
+    memcpy(&parent, buffer + bufferIndex, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
+    return 0;
+}
     
 /*
  * Write the content of the node to the page pid in the PageFile pf.
@@ -212,14 +237,40 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::write(PageId pid, PageFile& pf)
-{ return 0; }
+{
+    memset(buffer, 0, sizeof(PageFile::PAGE_SIZE * sizeof(char))); 
+    int bufferIndex = 0;
+    memcpy(buffer + bufferIndex, &isLeaf, sizeof(int));
+    bufferIndex += sizeof(int);
+    memcpy(buffer + bufferIndex, &length, sizeof(int));
+    bufferIndex += sizeof(int);
+    std::list<PageId>::iterator pageIt = pages.begin();
+    std::list<int>::iterator keyIt = keys.begin();
+    for (int i = 0; i < length; i++) {
+        memcpy(buffer + bufferIndex, &*pageIt, sizeof(PageId));
+        bufferIndex += sizeof(PageId);
+        memcpy(buffer + bufferIndex, &*keyIt, sizeof(int));
+        bufferIndex += sizeof(int);
+        pageIt++;
+        keyIt++;
+    }
+    memcpy(buffer + bufferIndex, &parent, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
+    RC errorCode = pf.write(pid, buffer);
+    if (errorCode < 0)
+        reportErrorExit(errorCode);
+    return 0;
+
+}
 
 /*
  * Return the number of keys stored in the node.
  * @return the number of keys in the node
  */
 int BTNonLeafNode::getKeyCount()
-{ return 0; }
+{ 
+    return length;
+}
 
 
 /*
@@ -252,7 +303,21 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
-{ return 0; }
+{ 
+    int keyIndex = 0;
+    std::list<int>::iterator keyIt = keys;
+    std::list<PageId>::iterator pageIt = pages;
+
+    while (keyIt != keys.end() && searchKey > *keyIt)
+    {
+        if (pageIt == pages.end())
+            return -1; ///TO DO: Find a better error message, but this should not happen
+        keyIt++;
+        pageIt++;
+    }
+    pid = *pageIt;
+    return 0;
+}
 
 /*
  * Initialize the root node with (pid1, key, pid2).
