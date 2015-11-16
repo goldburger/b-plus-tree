@@ -21,6 +21,7 @@ void reportErrorExit(RC error) {
  */
 RC BTLeafNode::read(PageId pid, const PageFile& pf)
 {
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
     RC errorCode = pf.read(pid, buffer);
     if (errorCode < 0)
         reportErrorExit(errorCode);
@@ -136,7 +137,10 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
  */
 RC BTLeafNode::insertAndSplit(int key, const RecordId& rid, 
                               BTLeafNode& sibling, int& siblingKey)
-{ return 0; }
+{
+    // TODO
+    return 0;
+}
 
 /**
  * If searchKey exists in the node, set eid to the index entry
@@ -150,7 +154,28 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
  * @return 0 if searchKey is found. Otherwise return an error code.
  */
 RC BTLeafNode::locate(int searchKey, int& eid)
-{ return 0; }
+{
+    std::list<int>::iterator it = keys.begin();
+    // If first entry is smaller search key cannot be found as key is increasing
+    if (searchKey < *it) {
+        eid = 0;
+        return RC_NO_SUCH_RECORD;
+    }
+    eid = 0;
+    // Loop continues while search key > last key checked
+    for (; it != keys.end(); it++) {
+        if (searchKey == *it)
+            return 0;
+        // If search key is less than current entry, cannot be found
+        // eid has not been incremented and holds index of largest key smaller
+        else if (searchKey < *it) {
+            return RC_NO_SUCH_RECORD;
+        }
+        eid++;
+    }
+    eid--; // Undo last eid increment to meet eid value requirements
+    return RC_NO_SUCH_RECORD;
+}
 
 /*
  * Read the (key, rid) pair from the eid entry.
@@ -309,8 +334,8 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
 RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
 { 
     int keyIndex = 0;
-    std::list<int>::iterator keyIt = keys;
-    std::list<PageId>::iterator pageIt = pages;
+    std::list<int>::iterator keyIt = keys.begin();
+    std::list<PageId>::iterator pageIt = pages.begin();
 
     if (searchKey < *keyIt)
         pid = leftMostPageId;
