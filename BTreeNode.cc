@@ -10,7 +10,7 @@ using namespace std;
 // ceil((N-1)/2) = 38
 // Nodes may have [38, 75] keys
 // ceil(N/2) = 38
-// Non-leafe nodes may have [38, 75] keys
+// Non-leaf nodes may have [38, 75] keys
 #define MAX_KEYS 75
 
 void reportErrorExit(RC error) {
@@ -165,8 +165,8 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
         if (errorCode < 0)
             return errorCode;
         sibling.length++;
-        keys.erase(keys);
-        records.erase(records);
+        keyIt = keys.erase(keyIt);
+        recIt = records.erase(recIt);
         length--;
     }
     siblingKey = sibling.keys.front();
