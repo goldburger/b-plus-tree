@@ -114,7 +114,7 @@ class BTLeafNode {
     std::list<RecordId> records;
     std::list<int> keys;
     PageId parent;
-	PageId id;
+    PageId id;
     PageId nextLeaf;
    /**
     * The main memory buffer for loading the content of the disk page 

@@ -188,13 +188,13 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
         recIt = records.erase(recIt);
         length--;
     }
-	int eid = 0;
-	RecordId sibRec;
-	sibling.setNextLeaf(nextLeaf);
-	nextLeaf = sibling.getPageId();
+    int eid = 0;
+    RecordId sibRec;
+    sibling.setNextLeaf(nextLeaf);
+    nextLeaf = sibling.getPageId();
     int errorCode = sibling.readEntry(eid, siblingKey, sibRec);
-	if (errorCode < 0)
-		return errorCode;
+    if (errorCode < 0)
+        return errorCode;
     return 0;
 }
 
