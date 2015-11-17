@@ -6,6 +6,11 @@
 
 using namespace std;
 
+// As each node may have up to N-1 keys, N = 76
+// ceil((N-1)/2) = 38
+// Nodes may have [38, 75] keys
+// ceil(N/2) = 38
+// Non-leafe nodes may have [38, 75] keys
 #define MAX_KEYS 75
 
 void reportErrorExit(RC error) {
@@ -90,6 +95,30 @@ int BTLeafNode::getKeyCount()
     return length;
 }
 
+RC BTLeafNode::insertWithoutCheck(int key, const RecordId& rid)
+{
+    int index = 0;
+    std::list<int>::iterator it;
+    for(it = keys.begin(); it != keys.end(); it++) {
+        if (*it < key) {
+            index++;
+        }
+        else
+            break;
+    }
+    keys.insert(it, key);
+    std::list<RecordId>::iterator recIt;
+    for (int i = 0; i < index; i++) {
+        recIt++;
+    }
+    RecordId newRec;
+    newRec.pid = rid.pid;
+    newRec.sid = rid.sid;
+    records.insert(recIt, newRec);
+    length++;
+    return 0;
+}
+
 /*
  * Insert a (key, rid) pair to the node.
  * @param key[IN] the key to insert
@@ -102,27 +131,8 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
         return RC_NODE_FULL;
     else
     {
-        int index = 0;
-        std::list<int>::iterator it;
-        for(it = keys.begin(); it != keys.end(); it++) {
-            if (*it < key) {
-                index++;
-            }
-            else
-                break;
-        }
-        keys.insert(it, key);
-        std::list<RecordId>::iterator recIt;
-        for (int i = 0; i < index; i++) {
-            recIt++;
-        }
-        RecordId newRec;
-        newRec.pid = rid.pid;
-        newRec.sid = rid.sid;
-        records.insert(recIt, newRec);
-        length++;
+        return insertWithoutCheck(key, rid);
     }
-    return 0;
 }
 
 /*
@@ -138,7 +148,28 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 RC BTLeafNode::insertAndSplit(int key, const RecordId& rid, 
                               BTLeafNode& sibling, int& siblingKey)
 {
-    // TODO
+    // Note: sibling must have been properly initialized by the caller, with only its lists missing
+    if (length < MAX_KEYS)
+        return RC_INVALID_RID;
+    // The key and rid are first properly inserted into the lists to preserve ordering, before splitting between this node and sibling
+    insertWithoutCheck(key, rid);
+    int half = MAX_KEYS/2; // Use ceil if MAX_KEYS changes!
+    std::list<int>::iterator keyIt = keys.begin();
+    std::list<RecordId>::iterator recIt = records.begin();
+    for (int i = 0; i < half; i++) {
+        keyIt++;
+        recIt++;
+    }
+    while (keyIt != keys.end()) {
+        int errorCode = sibling.insert(*keyIt, *recIt);
+        if (errorCode < 0)
+            return errorCode;
+        sibling.length++;
+        keys.erase(keys);
+        records.erase(records);
+        length--;
+    }
+    siblingKey = sibling.keys.front();
     return 0;
 }
 

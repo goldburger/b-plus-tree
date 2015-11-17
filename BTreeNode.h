@@ -100,6 +100,8 @@ class BTLeafNode {
     RC write(PageId pid, PageFile& pf);
 
   private:
+    RC BTLeafNode::insertWithoutCheck(int key, const RecordId& rid);
+
     int isLeaf;
     int length;
     std::list<RecordId> records;
