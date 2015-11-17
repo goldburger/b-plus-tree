@@ -19,6 +19,9 @@
  */
 class BTLeafNode {
   public:
+
+    BTLeafNode(PageId parent, PageId id, PageId nextLeaf);
+
    /**
     * Insert the (key, rid) pair to the node.
     * Remember that all keys inside a B+tree node should be kept sorted.
@@ -99,6 +102,10 @@ class BTLeafNode {
     */
     RC write(PageId pid, PageFile& pf);
 
+    PageId getPageId();
+    PageId getNextLeaf();
+    void setNextLeaf(PageId next);
+
   private:
     RC insertWithoutCheck(int key, const RecordId& rid);
 
@@ -107,6 +114,7 @@ class BTLeafNode {
     std::list<RecordId> records;
     std::list<int> keys;
     PageId parent;
+	PageId id;
     PageId nextLeaf;
    /**
     * The main memory buffer for loading the content of the disk page 
@@ -186,7 +194,6 @@ class BTNonLeafNode {
     RC write(PageId pid, PageFile& pf);
 
   private:
-    
     int isLeaf;
     int length;
     std::list<PageId> pages;

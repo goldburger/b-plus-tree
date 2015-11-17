@@ -18,6 +18,26 @@ void reportErrorExit(RC error) {
     exit(error);
 }
 
+BTLeafNode::BTLeafNode(PageId parent, PageId id, PageId nextLeaf) {
+    isLeaf = 1;
+    length = 0;
+    this->parent = parent;
+    this->id = id;
+    this->nextLeaf = nextLeaf;
+}
+
+PageId BTLeafNode::getPageId() {
+    return id;
+}
+
+PageId BTLeafNode::getNextLeaf() {
+    return nextLeaf;
+}
+
+void BTLeafNode::setNextLeaf(PageId next) {
+    nextLeaf = next;
+}
+
 /*
  * Read the content of the node from the page pid in the PageFile pf.
  * @param pid[IN] the PageId to read
@@ -164,12 +184,17 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
         int errorCode = sibling.insert(*keyIt, *recIt);
         if (errorCode < 0)
             return errorCode;
-        sibling.length++;
         keyIt = keys.erase(keyIt);
         recIt = records.erase(recIt);
         length--;
     }
-    siblingKey = sibling.keys.front();
+	int eid = 0;
+	RecordId sibRec;
+	sibling.setNextLeaf(nextLeaf);
+	nextLeaf = sibling.getPageId();
+    int errorCode = sibling.readEntry(eid, siblingKey, sibRec);
+	if (errorCode < 0)
+		return errorCode;
     return 0;
 }
 
