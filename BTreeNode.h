@@ -103,8 +103,6 @@ class BTLeafNode {
     RC write(PageId pid, PageFile& pf);
 
     PageId getPageId();
-    PageId getNextLeaf();
-    void setNextLeaf(PageId next);
     void print();
 
   private:

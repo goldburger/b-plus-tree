@@ -31,14 +31,6 @@ PageId BTLeafNode::getPageId() {
     return id;
 }
 
-PageId BTLeafNode::getNextLeaf() {
-    return nextLeaf;
-}
-
-void BTLeafNode::setNextLeaf(PageId next) {
-    nextLeaf = next;
-}
-
 void BTLeafNode::print() {
     std::cout << "isLeaf: " << isLeaf;
     std::cout << "\tlength: "<< length << std::endl;
@@ -208,7 +200,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     }
     int eid = 0;
     RecordId sibRec;
-    sibling.setNextLeaf(nextLeaf);
+    sibling.setNextNodePtr(nextLeaf);
     nextLeaf = sibling.getPageId();
     int errorCode = sibling.readEntry(eid, siblingKey, sibRec);
     if (errorCode < 0)
