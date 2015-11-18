@@ -105,6 +105,7 @@ class BTLeafNode {
     PageId getPageId();
     PageId getNextLeaf();
     void setNextLeaf(PageId next);
+    void print();
 
   private:
     RC insertWithoutCheck(int key, const RecordId& rid);

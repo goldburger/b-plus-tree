@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string.h>
+#include <iostream>
 #include "BTreeNode.h"
 
 using namespace std;
@@ -36,6 +37,23 @@ PageId BTLeafNode::getNextLeaf() {
 
 void BTLeafNode::setNextLeaf(PageId next) {
     nextLeaf = next;
+}
+
+void BTLeafNode::print() {
+    std::cout << "isLeaf: " << isLeaf;
+    std::cout << "\tlength: "<< length << std::endl;
+    std::cout << "Records/keys: " << std::endl;
+    std::list<RecordId>::iterator recIt = records.begin();
+    std::list<int>::iterator keyIt = keys.begin();
+    for (int i = 0; i < length; i++) {
+        std::cout << "(" << recIt->pid << "," << recIt->sid << ") ";
+        std::cout << *keyIt << std::endl;
+        recIt++;
+        keyIt++;
+    }
+    std::cout << "Parent: " << parent;
+    std::cout << "\tId: " << id;
+    std::cout << "\t nextLeaf: " << nextLeaf << std::endl;
 }
 
 /*
@@ -127,7 +145,7 @@ RC BTLeafNode::insertWithoutCheck(int key, const RecordId& rid)
             break;
     }
     keys.insert(it, key);
-    std::list<RecordId>::iterator recIt;
+    std::list<RecordId>::iterator recIt = records.begin();
     for (int i = 0; i < index; i++) {
         recIt++;
     }
