@@ -196,9 +196,12 @@ class BTNonLeafNode {
     RC write(PageId pid, PageFile& pf);
 
     PageId getPageId();
+	void setLastId(PageId last);
     void print();
 
   private:
+    RC insertWithoutCheck(int key, PageId pid);
+  
     int isLeaf;
     int length;
     std::list<PageId> pages;

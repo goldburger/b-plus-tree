@@ -295,6 +295,10 @@ PageId BTNonLeafNode::getPageId() {
     return id;
 }
 
+void BTNonLeafNode::setLastId(PageId last) {
+    lastId = last;
+}
+
 void BTNonLeafNode::print() {
     std::cout << "isLeaf: " << isLeaf;
     std::cout << "\tlength: "<< length << std::endl;
@@ -302,7 +306,7 @@ void BTNonLeafNode::print() {
     std::list<PageId>::iterator pageIt = pages.begin();
     std::list<int>::iterator keyIt = keys.begin();
     for (int i = 0; i < length; i++) {
-        std::cout << pageIt << " " << *keyIt << std::endl;
+        std::cout << *pageIt << " " << *keyIt << std::endl;
         pageIt++;
         keyIt++;
     }
@@ -443,7 +447,36 @@ RC BTNonLeafNode::insert(int key, PageId pid)
  * @return 0 if successful. Return an error code if there is an error.
  */
 RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, int& midKey)
-{ return 0; }
+{
+    if (length < MAX_KEYS)
+        return RC_INVALID_PID;
+    insertWithoutCheck(key, pid);
+    int half = MAX_KEYS/2 - 1;
+    std::list<PageId>::iterator pageIt = pages.begin();
+    std::list<int>::iterator keyIt = keys.begin();
+    for (int i = 0; i < half; i++) {
+        pageIt++;
+        keyIt++;
+    }
+    // Save middle key to move up
+    midKey = *keyIt;
+    keyIt = keys.erase(keyIt);
+    // Save corresponding PageId for new lastId
+    PageId midPid = *pageIt;
+    pageIt = pages.erase(pageIt);
+    length--;
+    while (keyIt != keys.end()) {
+        int errorCode = sibling.insert(*keyIt, *pageIt);
+        if (errorCode < 0)
+            return errorCode;
+        keyIt = keys.erase(keyIt);
+        pageIt = pages.erase(pageIt);
+        length--;
+    }
+    sibling.setLastId(lastId);
+    lastId = midPid;
+    return 0;
+}
 
 /*
  * Given the searchKey, find the child-node pointer to follow and
