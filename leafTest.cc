@@ -22,11 +22,28 @@ int main() {
     leaf2.read(rootid, leafPage);
     leaf2.print();
 
+    BTNonLeafNode nl1(-2, leafPage.endPid());
+    nl1.initializeRoot(leaf1.getPageId(), 10, leaf2.getPageId());
+    nl1.print();
+
+    r.pid = 7; r.sid = 13;
+    leaf1.insert(9, r);
+    r.pid = 133; r.sid = 90;
+    leaf1.insert(11, r);
+    BTLeafNode leaf3(5, leafPage.endPid(), 4);
+    r.pid = 37; r.sid = 30;
+    leaf1.print();
+    std::cout << "\n" << std::endl;
+    int siblingKey;
+    leaf1.insertAndSplit(11, r, leaf3, siblingKey);
+    leaf1.print();
+    leaf2.print();
+
     leafPage.close();
 
-    int eid;
+    /*int eid;
     int result = leaf2.locate(79, eid);
     std::cout << "eid: " << eid << " code: " << result << std::endl;
     result = leaf2.locate(1024, eid);
-    std::cout << "eid: " << eid << " code: " << result << std::endl;
+    std::cout << "eid: " << eid << " code: " << result << std::endl;*/
 }
