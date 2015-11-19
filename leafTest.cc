@@ -35,9 +35,9 @@ int main() {
     leaf1.print();
     std::cout << "\n" << std::endl;
     int siblingKey;
-    leaf1.insertAndSplit(11, r, leaf3, siblingKey);
+    leaf1.insertAndSplit(12, r, leaf3, siblingKey);
     leaf1.print();
-    leaf2.print();
+    leaf3.print();
 
     leafPage.close();
 

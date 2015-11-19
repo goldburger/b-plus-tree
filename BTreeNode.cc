@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string.h>
+#include <math.h>
 #include <iostream>
 #include "BTreeNode.h"
 
@@ -182,7 +183,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
         return RC_INVALID_RID;
     // The key and rid are first properly inserted into the lists to preserve ordering, before splitting between this node and sibling
     insertWithoutCheck(key, rid);
-    int half = MAX_KEYS/2; // Use ceil if MAX_KEYS changes!
+    int half = ceil(MAX_KEYS/2.0);
     std::list<int>::iterator keyIt = keys.begin();
     std::list<RecordId>::iterator recIt = records.begin();
     for (int i = 0; i < half; i++) {
@@ -451,7 +452,7 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
     if (length < MAX_KEYS)
         return RC_INVALID_PID;
     insertWithoutCheck(key, pid);
-    int half = MAX_KEYS/2 - 1;
+    int half = ceil(MAX_KEYS/2.0);
     std::list<PageId>::iterator pageIt = pages.begin();
     std::list<int>::iterator keyIt = keys.begin();
     for (int i = 0; i < half; i++) {
