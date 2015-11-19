@@ -20,7 +20,7 @@
 class BTLeafNode {
   public:
 
-    BTLeafNode(PageId id, PageId nextLeaf);
+    BTLeafNode(PageId id);
 
    /**
     * Insert the (key, rid) pair to the node.

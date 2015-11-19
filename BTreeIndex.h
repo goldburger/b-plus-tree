@@ -37,6 +37,9 @@ class BTreeIndex {
 
   RC writeRoot();
   RC readRoot();
+  RC initializeTree();
+  
+  RC insertRecursive(BTNonLeafNode node, int key, const RecordId& rid);
   
   /**
    * Open the index file in read or write mode.

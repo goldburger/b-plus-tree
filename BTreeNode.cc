@@ -20,11 +20,11 @@ void reportErrorExit(RC error) {
     exit(error);
 }
 
-BTLeafNode::BTLeafNode(PageId id, PageId nextLeaf) {
+BTLeafNode::BTLeafNode(PageId id) {
     isLeaf = 1;
     length = 0;
     this->id = id;
-    this->nextLeaf = nextLeaf;
+    nextLeaf = -1;
 }
 
 PageId BTLeafNode::getPageId() {
@@ -43,7 +43,7 @@ void BTLeafNode::print() {
         recIt++;
         keyIt++;
     }
-    std::cout << "\tId: " << id;
+    std::cout << "Id: " << id;
     std::cout << "\t nextLeaf: " << nextLeaf << std::endl;
 }
 
@@ -315,7 +315,7 @@ void BTNonLeafNode::print() {
         pageIt++;
         keyIt++;
     }
-    std::cout << "\tId: " << id;
+    std::cout << "Id: " << id;
     std::cout << "\t lastId: " << lastId << std::endl;
 }
 

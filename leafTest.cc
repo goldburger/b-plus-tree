@@ -8,7 +8,7 @@ int main() {
     PageFile leafPage;
     leafPage.open("testIndex.txt", 'w');
     int rootid = leafPage.endPid();
-    BTLeafNode leaf1(-1, rootid, -1);
+    BTLeafNode leaf1(rootid);
     RecordId r;
     r.pid = 10; r.sid = 22;
     leaf1.insert(90, r);
@@ -18,11 +18,11 @@ int main() {
     leaf1.write(rootid, leafPage);
     leaf1.print();
 
-    BTLeafNode leaf2(-1, rootid, -3);
+    BTLeafNode leaf2(rootid);
     leaf2.read(rootid, leafPage);
     leaf2.print();
 
-    BTNonLeafNode nl1(-2, leafPage.endPid());
+    BTNonLeafNode nl1(leafPage.endPid());
     nl1.initializeRoot(leaf1.getPageId(), 10, leaf2.getPageId());
     nl1.insert(11, 55);
     nl1.insert(54, 82);
@@ -30,7 +30,7 @@ int main() {
     nl1.insert(73, 29);
     nl1.print();
     std::cout << "\n" << std::endl;
-    BTNonLeafNode nl2(8, leafPage.endPid());
+    BTNonLeafNode nl2(leafPage.endPid());
     int midKey;
     nl1.insertAndSplit(85, 12, nl2, midKey);
     nl1.print();
@@ -41,7 +41,7 @@ int main() {
     leaf1.insert(9, r);
     r.pid = 133; r.sid = 90;
     leaf1.insert(11, r);
-    BTLeafNode leaf3(5, leafPage.endPid(), 4);
+    BTLeafNode leaf3(leafPage.endPid());
     r.pid = 37; r.sid = 30;
     leaf1.print();
     std::cout << "\n" << std::endl;
