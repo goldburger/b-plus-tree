@@ -159,8 +159,7 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
 {
     if (length >= MAX_KEYS)
         return RC_NODE_FULL;
-    else
-    {
+    else {
         return insertWithoutCheck(key, rid);
     }
 }
@@ -285,12 +284,11 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
     return 0;
 }
 
-BTNonLeafNode::BTNonLeafNode(PageId parent, PageId id, PageId lastId) {
-    isLeaf = 1;
+BTNonLeafNode::BTNonLeafNode(PageId parent, PageId id) {
+    isLeaf = 0;
     length = 0;
     this->parent = parent;
     this->id = id;
-    this->lastId = lastId;
 }
 
 PageId BTNonLeafNode::getPageId() {
@@ -391,6 +389,33 @@ int BTNonLeafNode::getKeyCount()
     return length;
 }
 
+RC BTNonLeafNode::insertWithoutCheck(int key, PageId pid)
+{
+    int index = 0;
+    std::list<int>::iterator it;
+    for (it = keys.begin(); it != keys.end(); it++) {
+        if (*it < key) {
+        index++;
+        }
+        else
+            break;
+    }
+    // Special case; change lastId
+    if (it == keys.end()) {
+        keys.push_back(key);
+        pages.push_back(lastId);
+        lastId = pid;
+        length++;
+    }
+    keys.insert(it, key);
+    std::list<PageId>::iterator pageIt = pages.begin();
+    for (int i = 0; i < index; i++) {
+        pageIt++;
+    }
+    pages.insert(pageIt, pid);
+    length++;
+    return 0;
+}
 
 /*
  * Insert a (key, pid) pair to the node.
@@ -399,7 +424,13 @@ int BTNonLeafNode::getKeyCount()
  * @return 0 if successful. Return an error code if the node is full.
  */
 RC BTNonLeafNode::insert(int key, PageId pid)
-{ return 0; }
+{
+    if (length >= MAX_KEYS)
+        return RC_NODE_FULL;
+    else {
+        return insertWithoutCheck(key, pid);
+    }
+}
 
 /*
  * Insert the (key, pid) pair to the node
@@ -426,19 +457,14 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
     int keyIndex = 0;
     std::list<int>::iterator keyIt = keys.begin();
     std::list<PageId>::iterator pageIt = pages.begin();
-
-    if (searchKey < *keyIt)
-        pid = leftMostPageId;
-    else
-    {
-        while (keyIt != keys.end() && searchKey >= *keyIt)
-        {
-            keyIt++;
-            pageIt++;
+    for (; keyIt != keys.end(); keyIt++) {
+        if (searchKey < *keyIt) {
+            pid = *pageIt;
+            return 0;
         }
-        pageIt--; //since leftmostPid is not in the vector the page iterator will always be one greater. 
-        pid = *pageIt;
+        pageIt++;
     }
+    pid = lastId;
     return 0;
 }
 
@@ -451,17 +477,13 @@ RC BTNonLeafNode::locateChildPtr(int searchKey, PageId& pid)
  */
 RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
 { 
-    //Clear buffer
-    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
     pages.clear();
     keys.clear();
-
     isLeaf = 0;
     length = 1;
-    leftMostPageId = pid1;
+    pages.push_back(pid1);
     keys.push_back(key);
-    pages.push_back(pid2);
+    lastId = pid2;
     parent = -1;    
-    //Where do we write this to?     
     return 0;
 }

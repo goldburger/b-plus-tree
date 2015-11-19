@@ -129,7 +129,7 @@ class BTLeafNode {
 class BTNonLeafNode {
   public:
 
-    BTNonLeafNode(PageId parent, PageId id, PageId lastId);
+    BTNonLeafNode(PageId parent, PageId id);
   
    /**
     * Insert a (key, pid) pair to the node.
