@@ -128,6 +128,9 @@ class BTLeafNode {
  */
 class BTNonLeafNode {
   public:
+
+    BTNonLeafNode(PageId parent, PageId id, PageId lastId);
+  
    /**
     * Insert a (key, pid) pair to the node.
     * Remember that all keys inside a B+tree node should be kept sorted.
@@ -192,18 +195,18 @@ class BTNonLeafNode {
     */
     RC write(PageId pid, PageFile& pf);
 
+    PageId getPageId();
+    void print();
+
   private:
     int isLeaf;
     int length;
     std::list<PageId> pages;
     std::list<int> keys;
     PageId parent;
-    PageId leftMostPageId;
+    PageId id;
+    PageId lastId;
 
-    /*The structure for non leaf nodes pages  will look like so:
-
-        isLeaf, length, leftMostPageId , key0, PageId1, ..., parent Parent Pid
-    */
    /**
     * The main memory buffer for loading the content of the disk page 
     * that contains the node.

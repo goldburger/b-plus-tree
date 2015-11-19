@@ -198,11 +198,10 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
         recIt = records.erase(recIt);
         length--;
     }
-    int eid = 0;
     RecordId sibRec;
     sibling.setNextNodePtr(nextLeaf);
     nextLeaf = sibling.getPageId();
-    int errorCode = sibling.readEntry(eid, siblingKey, sibRec);
+    int errorCode = sibling.readEntry(0, siblingKey, sibRec);
     if (errorCode < 0)
         return errorCode;
     return 0;
@@ -222,12 +221,11 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
 RC BTLeafNode::locate(int searchKey, int& eid)
 {
     std::list<int>::iterator it = keys.begin();
+    eid = 0;
     // If first entry is smaller search key cannot be found as key is increasing
     if (searchKey < *it) {
-        eid = 0;
         return RC_NO_SUCH_RECORD;
     }
-    eid = 0;
     // Loop continues while search key > last key checked
     for (; it != keys.end(); it++) {
         if (searchKey == *it)
@@ -253,7 +251,7 @@ RC BTLeafNode::locate(int searchKey, int& eid)
 RC BTLeafNode::readEntry(int eid, int& key, RecordId& rid)
 {
     // Note: node entries are indexed starting from zero, length starts from 1
-    if (eid >= length)
+    if (eid >= length || eid < 0)
         return RC_NO_SUCH_RECORD;
     
     std::list<int>::iterator keyIt = keys.begin();
@@ -287,6 +285,34 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
     return 0;
 }
 
+BTNonLeafNode::BTNonLeafNode(PageId parent, PageId id, PageId lastId) {
+    isLeaf = 1;
+    length = 0;
+    this->parent = parent;
+    this->id = id;
+    this->lastId = lastId;
+}
+
+PageId BTNonLeafNode::getPageId() {
+    return id;
+}
+
+void BTNonLeafNode::print() {
+    std::cout << "isLeaf: " << isLeaf;
+    std::cout << "\tlength: "<< length << std::endl;
+    std::cout << "Pages/keys: " << std::endl;
+    std::list<PageId>::iterator pageIt = pages.begin();
+    std::list<int>::iterator keyIt = keys.begin();
+    for (int i = 0; i < length; i++) {
+        std::cout << pageIt << " " << *keyIt << std::endl;
+        pageIt++;
+        keyIt++;
+    }
+    std::cout << "Parent: " << parent;
+    std::cout << "\tId: " << id;
+    std::cout << "\t lastId: " << lastId << std::endl;
+}
+
 /*
  * Read the content of the node from the page pid in the PageFile pf.
  * @param pid[IN] the PageId to read
@@ -295,8 +321,7 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
  */
 RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
 {
-    // Assumes pf is opened before & closed after by caller, as this needs file name
-    // Is this assumption valid?
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
     RC errorCode = pf.read(pid, buffer);
     if (errorCode < 0)
         reportErrorExit(errorCode);
@@ -306,8 +331,6 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
     bufferIndex += sizeof(int);
     memcpy(&length, buffer + bufferIndex, sizeof(int));
     bufferIndex += sizeof(int);
-    memcpy(&leftMostPageId, buffer + bufferIndex, sizeof(PageId));
-    bufferIndex += sizeof(PageId);
     for (int i = 0; i < length; i++) {
         PageId nextPage;
         memcpy(&nextPage, buffer + bufferIndex, sizeof(PageId));
@@ -319,6 +342,8 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
         keys.push_back(nextKey);
     }
     memcpy(&parent, buffer + bufferIndex, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
+    memcpy(&lastId, buffer + bufferIndex, sizeof(PageId));
     bufferIndex += sizeof(PageId);
     return 0;
 }
@@ -337,8 +362,6 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
     bufferIndex += sizeof(int);
     memcpy(buffer + bufferIndex, &length, sizeof(int));
     bufferIndex += sizeof(int);
-    memcpy(buffer + bufferIndex, &leftMostPageId, sizeof(PageId));
-    bufferIndex += sizeof(PageId);
     std::list<PageId>::iterator pageIt = pages.begin();
     std::list<int>::iterator keyIt = keys.begin();
     for (int i = 0; i < length; i++) {
@@ -351,11 +374,12 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
     }
     memcpy(buffer + bufferIndex, &parent, sizeof(PageId));
     bufferIndex += sizeof(PageId);
+    memcpy(buffer + bufferIndex, &lastId, sizeof(PageId));
+    bufferIndex += sizeof(PageId);
     RC errorCode = pf.write(pid, buffer);
     if (errorCode < 0)
         reportErrorExit(errorCode);
     return 0;
-
 }
 
 /*
