@@ -104,6 +104,7 @@ class BTLeafNode {
 
     PageId getPageId();
     void print();
+    RC insert_end(int key, const RecordId& rid);
 
   private:
     RC insertWithoutCheck(int key, const RecordId& rid);
@@ -198,6 +199,7 @@ class BTNonLeafNode {
     PageId getPageId();
 	void setLastId(PageId last);
     void print();
+    RC insert_end(int key, PageId pid);
 
   private:
     RC insertWithoutCheck(int key, PageId pid);

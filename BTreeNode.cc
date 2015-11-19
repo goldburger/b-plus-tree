@@ -13,7 +13,7 @@ using namespace std;
 // Nodes may have [38, 75] keys
 // ceil(N/2) = 38
 // Non-leaf nodes may have [38, 75] keys
-#define MAX_KEYS 5
+#define MAX_KEYS 75
 
 void reportErrorExit(RC error) {
     printf("Error! Received RC code%d\n", error);
@@ -165,6 +165,17 @@ RC BTLeafNode::insert(int key, const RecordId& rid)
     }
 }
 
+RC BTLeafNode::insert_end(int key, const RecordId& rid)
+{
+    RecordId newRec;
+    newRec.pid = rid.pid;
+    newRec.sid = rid.sid;
+    records.push_back(newRec);
+    keys.push_back(key);
+	length++;
+	return 0;
+}
+
 /*
  * Insert the (key, rid) pair to the node
  * and split the node half and half with sibling.
@@ -191,7 +202,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
         recIt++;
     }
     while (keyIt != keys.end()) {
-        int errorCode = sibling.insert(*keyIt, *recIt);
+        int errorCode = sibling.insert_end(*keyIt, *recIt);
         if (errorCode < 0)
             return errorCode;
         keyIt = keys.erase(keyIt);
@@ -411,12 +422,14 @@ RC BTNonLeafNode::insertWithoutCheck(int key, PageId pid)
         pages.push_back(lastId);
         lastId = pid;
         length++;
+		return 0;
     }
     keys.insert(it, key);
     std::list<PageId>::iterator pageIt = pages.begin();
     for (int i = 0; i < index; i++) {
         pageIt++;
     }
+	pageIt++; // Page Ids inserted with key are inserted at index 1 higher
     pages.insert(pageIt, pid);
     length++;
     return 0;
@@ -435,6 +448,14 @@ RC BTNonLeafNode::insert(int key, PageId pid)
     else {
         return insertWithoutCheck(key, pid);
     }
+}
+
+RC BTNonLeafNode::insert_end(int key, PageId pid)
+{
+    pages.push_back(pid);
+    keys.push_back(key);
+	length++;
+	return 0;
 }
 
 /*
@@ -467,7 +488,7 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
     pageIt = pages.erase(pageIt);
     length--;
     while (keyIt != keys.end()) {
-        int errorCode = sibling.insert(*keyIt, *pageIt);
+        int errorCode = sibling.insert_end(*keyIt, *pageIt);
         if (errorCode < 0)
             return errorCode;
         keyIt = keys.erase(keyIt);
