@@ -12,12 +12,39 @@
 
 using namespace std;
 
+#define ROOT_STORAGE_BLOCK 0
+
 /*
  * BTreeIndex constructor
  */
 BTreeIndex::BTreeIndex()
 {
     rootPid = -1;
+}
+
+RC BTreeIndex::writeRoot()
+{
+    char buffer[PageFile::PAGE_SIZE];
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
+    memcpy(buffer, &rootPid, sizeof(PageId));
+    return pf.write(ROOT_STORAGE_BLOCK, buffer);
+}
+
+RC BTreeIndex::readRoot()
+{
+    char buffer[PageFile::PAGE_SIZE];
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
+    RC errorCode = pf.read(ROOT_STORAGE_BLOCK, buffer);
+    if (errorCode < 0)
+        return errorCode;
+    memcpy(&rootPid, buffer, sizeof(PageId);
+    return 0;
+}
+
+RC BTreeIndex::initializeTree()
+{
+    writeRoot(); // Used to fill 0th block of index file
+    BTLeafNode root(/*TODO*/);
 }
 
 /*
@@ -29,7 +56,7 @@ BTreeIndex::BTreeIndex()
  */
 RC BTreeIndex::open(const string& indexname, char mode)
 {
-    return 0;
+    return pf.open(indexname, mode);
 }
 
 /*
@@ -38,7 +65,7 @@ RC BTreeIndex::open(const string& indexname, char mode)
  */
 RC BTreeIndex::close()
 {
-    return 0;
+    return pf.close();
 }
 
 /*

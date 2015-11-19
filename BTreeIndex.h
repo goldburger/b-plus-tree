@@ -35,6 +35,9 @@ class BTreeIndex {
  public:
   BTreeIndex();
 
+  RC writeRoot();
+  RC readRoot();
+  
   /**
    * Open the index file in read or write mode.
    * Under 'w' mode, the index file should be created if it does not exist.

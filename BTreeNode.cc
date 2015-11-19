@@ -20,10 +20,9 @@ void reportErrorExit(RC error) {
     exit(error);
 }
 
-BTLeafNode::BTLeafNode(PageId parent, PageId id, PageId nextLeaf) {
+BTLeafNode::BTLeafNode(PageId id, PageId nextLeaf) {
     isLeaf = 1;
     length = 0;
-    this->parent = parent;
     this->id = id;
     this->nextLeaf = nextLeaf;
 }
@@ -44,7 +43,6 @@ void BTLeafNode::print() {
         recIt++;
         keyIt++;
     }
-    std::cout << "Parent: " << parent;
     std::cout << "\tId: " << id;
     std::cout << "\t nextLeaf: " << nextLeaf << std::endl;
 }
@@ -77,8 +75,6 @@ RC BTLeafNode::read(PageId pid, const PageFile& pf)
         bufferIndex += sizeof(int);
         keys.push_back(nextKey);
     }
-    memcpy(&parent, buffer + bufferIndex, sizeof(PageId));
-    bufferIndex += sizeof(PageId);
     memcpy(&nextLeaf, buffer + bufferIndex, sizeof(PageId));
     return 0;
 }
@@ -107,8 +103,6 @@ RC BTLeafNode::write(PageId pid, PageFile& pf)
         recIt++;
         keyIt++;
     }
-    memcpy(buffer + bufferIndex, &parent, sizeof(PageId));
-    bufferIndex += sizeof(PageId);
     memcpy(buffer + bufferIndex, &nextLeaf, sizeof(PageId));
     bufferIndex += sizeof(PageId);
     RC errorCode = pf.write(pid, buffer);
@@ -172,8 +166,8 @@ RC BTLeafNode::insert_end(int key, const RecordId& rid)
     newRec.sid = rid.sid;
     records.push_back(newRec);
     keys.push_back(key);
-	length++;
-	return 0;
+    length++;
+    return 0;
 }
 
 /*
@@ -296,10 +290,9 @@ RC BTLeafNode::setNextNodePtr(PageId pid)
     return 0;
 }
 
-BTNonLeafNode::BTNonLeafNode(PageId parent, PageId id) {
+BTNonLeafNode::BTNonLeafNode(PageId id) {
     isLeaf = 0;
     length = 0;
-    this->parent = parent;
     this->id = id;
 }
 
@@ -322,7 +315,6 @@ void BTNonLeafNode::print() {
         pageIt++;
         keyIt++;
     }
-    std::cout << "Parent: " << parent;
     std::cout << "\tId: " << id;
     std::cout << "\t lastId: " << lastId << std::endl;
 }
@@ -355,8 +347,6 @@ RC BTNonLeafNode::read(PageId pid, const PageFile& pf)
         bufferIndex += sizeof(int);
         keys.push_back(nextKey);
     }
-    memcpy(&parent, buffer + bufferIndex, sizeof(PageId));
-    bufferIndex += sizeof(PageId);
     memcpy(&lastId, buffer + bufferIndex, sizeof(PageId));
     bufferIndex += sizeof(PageId);
     return 0;
@@ -386,8 +376,6 @@ RC BTNonLeafNode::write(PageId pid, PageFile& pf)
         pageIt++;
         keyIt++;
     }
-    memcpy(buffer + bufferIndex, &parent, sizeof(PageId));
-    bufferIndex += sizeof(PageId);
     memcpy(buffer + bufferIndex, &lastId, sizeof(PageId));
     bufferIndex += sizeof(PageId);
     RC errorCode = pf.write(pid, buffer);
@@ -422,14 +410,14 @@ RC BTNonLeafNode::insertWithoutCheck(int key, PageId pid)
         pages.push_back(lastId);
         lastId = pid;
         length++;
-		return 0;
+	    return 0;
     }
     keys.insert(it, key);
     std::list<PageId>::iterator pageIt = pages.begin();
     for (int i = 0; i < index; i++) {
         pageIt++;
     }
-	pageIt++; // Page Ids inserted with key are inserted at index 1 higher
+    pageIt++; // Page Ids inserted with key are inserted at index 1 higher
     pages.insert(pageIt, pid);
     length++;
     return 0;
@@ -454,8 +442,8 @@ RC BTNonLeafNode::insert_end(int key, PageId pid)
 {
     pages.push_back(pid);
     keys.push_back(key);
-	length++;
-	return 0;
+    length++;
+    return 0;
 }
 
 /*
@@ -538,7 +526,6 @@ RC BTNonLeafNode::initializeRoot(PageId pid1, int key, PageId pid2)
     length = 1;
     pages.push_back(pid1);
     keys.push_back(key);
-    lastId = pid2;
-    parent = -1;    
+    lastId = pid2;  
     return 0;
 }

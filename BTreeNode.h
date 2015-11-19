@@ -20,7 +20,7 @@
 class BTLeafNode {
   public:
 
-    BTLeafNode(PageId parent, PageId id, PageId nextLeaf);
+    BTLeafNode(PageId id, PageId nextLeaf);
 
    /**
     * Insert the (key, rid) pair to the node.
@@ -113,7 +113,6 @@ class BTLeafNode {
     int length;
     std::list<RecordId> records;
     std::list<int> keys;
-    PageId parent;
     PageId id;
     PageId nextLeaf;
    /**
@@ -130,7 +129,7 @@ class BTLeafNode {
 class BTNonLeafNode {
   public:
 
-    BTNonLeafNode(PageId parent, PageId id);
+    BTNonLeafNode(PageId id);
   
    /**
     * Insert a (key, pid) pair to the node.
@@ -208,7 +207,6 @@ class BTNonLeafNode {
     int length;
     std::list<PageId> pages;
     std::list<int> keys;
-    PageId parent;
     PageId id;
     PageId lastId;
 
