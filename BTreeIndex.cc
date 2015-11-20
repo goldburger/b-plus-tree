@@ -7,6 +7,7 @@
  * @date 3/24/2008
  */
 
+#include <iostream>
 #include <string.h>
 #include "BTreeIndex.h"
 #include "BTreeNode.h"
@@ -51,6 +52,34 @@ RC BTreeIndex::initializeTree()
     rootPid = rootLeaf.getPageId();
     writeRoot();
     return rootLeaf.write(rootLeaf.getPageId(), pf);
+}
+
+void BTreeIndex::printRec(PageId id, string offset)
+{
+    char buffer[PageFile::PAGE_SIZE];
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
+    pf.read(id, buffer);
+    int isLeaf;
+    memcpy(&isLeaf, buffer, sizeof(int));
+    if (isLeaf) {
+        BTLeafNode leaf(id);
+        leaf.read(id, pf);
+        leaf.print(offset);
+    }
+    else {
+        BTNonLeafNode nonl(id);
+        nonl.read(id, pf);
+        nonl.print(offset);
+        for (int i = 0; i < nonl.getKeyCount(); i++) {
+            printRec(nonl.readEntry(i), offset + " ");
+        }
+    }
+}
+
+void BTreeIndex::print()
+{
+    cout << "Root Pid: " << rootPid << std::endl;
+    printRec(rootPid, "");
 }
 
 /*

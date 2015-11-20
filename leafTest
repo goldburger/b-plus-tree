@@ -1,0 +1,6 @@
+#!/bin/bash
+if [ -e "indextest.txt" ]
+then rm indextest.txt
+fi
+g++ -ggdb -o leaftest.out leaftest.cc BTreeNode.cc PageFile.cc RecordFile.cc BTreeIndex.cc
+./leaftest.out &> output.txt

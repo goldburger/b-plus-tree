@@ -31,20 +31,20 @@ PageId BTLeafNode::getPageId() {
     return id;
 }
 
-void BTLeafNode::print() {
-    std::cout << "isLeaf: " << isLeaf;
-    std::cout << "\tlength: "<< length << std::endl;
-    std::cout << "Records/keys: " << std::endl;
+void BTLeafNode::print(std::string offset) {
+    std::cout << offset << "Id: " << id;
+    std::cout << "\tisLeaf: " << isLeaf;
+    std::cout << "\tlength: " << length << std::endl;
+    std::cout << offset << "Records/keys: " << std::endl;
     std::list<RecordId>::iterator recIt = records.begin();
     std::list<int>::iterator keyIt = keys.begin();
     for (int i = 0; i < length; i++) {
-        std::cout << "(" << recIt->pid << "," << recIt->sid << ") ";
+        std::cout << offset << "(" << recIt->pid << "," << recIt->sid << ") ";
         std::cout << *keyIt << std::endl;
         recIt++;
         keyIt++;
     }
-    std::cout << "Id: " << id;
-    std::cout << "\t nextLeaf: " << nextLeaf << std::endl;
+    std::cout << offset << "nextLeaf: " << nextLeaf << std::endl;
 }
 
 /*
@@ -304,19 +304,28 @@ void BTNonLeafNode::setLastId(PageId last) {
     lastId = last;
 }
 
-void BTNonLeafNode::print() {
-    std::cout << "isLeaf: " << isLeaf;
+PageId BTNonLeafNode::readEntry(int eid) {
+    int i = 0;
+    for (std::list<PageId>::iterator it = pages.begin(); it != pages.end(); it++) {
+        if (i == eid)
+            return *it;
+        i++;
+	}
+}
+
+void BTNonLeafNode::print(std::string offset) {
+    std::cout << offset << "Id: " << id;
+    std::cout << "\tisLeaf: " << isLeaf;
     std::cout << "\tlength: "<< length << std::endl;
-    std::cout << "Pages/keys: " << std::endl;
+    std::cout << offset << "Pages/keys: " << std::endl;
     std::list<PageId>::iterator pageIt = pages.begin();
     std::list<int>::iterator keyIt = keys.begin();
     for (int i = 0; i < length; i++) {
-        std::cout << *pageIt << " " << *keyIt << std::endl;
+        std::cout << offset << *pageIt << " " << *keyIt << std::endl;
         pageIt++;
         keyIt++;
     }
-    std::cout << "Id: " << id;
-    std::cout << "\t lastId: " << lastId << std::endl;
+    std::cout << offset << "lastId: " << lastId << std::endl;
 }
 
 /*

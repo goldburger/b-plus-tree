@@ -103,7 +103,7 @@ class BTLeafNode {
     RC write(PageId pid, PageFile& pf);
 
     PageId getPageId();
-    void print();
+    void print(std::string offset);
     RC insert_end(int key, const RecordId& rid);
 
   private:
@@ -197,7 +197,8 @@ class BTNonLeafNode {
 
     PageId getPageId();
 	void setLastId(PageId last);
-    void print();
+    PageId readEntry(int eid);
+    void print(std::string offset);
     RC insert_end(int key, PageId pid);
 
   private:

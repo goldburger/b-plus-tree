@@ -1,11 +1,29 @@
 #include <list>
 #include <iostream>
+#include <stdlib.h>
+#include <time.h>
 #include "BTreeNode.h"
+#include "BTreeIndex.h"
 #include "PageFile.h"
 #include "RecordFile.h"
 
 int main() {
-    PageFile leafPage;
+    srand(time(NULL));
+
+    BTreeIndex tree;
+    tree.open("indextest.txt", 'w');
+    tree.initializeTree();
+    tree.readRoot();
+    RecordId rec;
+    for(int i = 0; i < 7; i++) {
+        rec.pid = rand() % 1000;
+        rec.sid = rand() % 1000;
+        tree.insert(rand() % 10000, rec);
+    }
+    tree.print();
+    tree.close();
+
+    /*PageFile leafPage;
     leafPage.open("testIndex.txt", 'w');
     int rootid = leafPage.endPid();
     BTLeafNode leaf1(rootid);
@@ -50,7 +68,7 @@ int main() {
     leaf1.print();
     leaf3.print();
 
-    leafPage.close();
+    leafPage.close();*/
 
     /*int eid;
     int result = leaf2.locate(79, eid);

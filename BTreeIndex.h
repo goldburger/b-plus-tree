@@ -39,6 +39,7 @@ class BTreeIndex {
   RC writeRoot();
   RC readRoot();
   RC initializeTree();
+  void print();
   
   /**
    * Open the index file in read or write mode.
@@ -97,6 +98,7 @@ class BTreeIndex {
   RC insertSplitWrite(BTLeafNode& leaf, int key, const RecordId& rid, int& siblingKey, PageId& siblingPid);
   RC insertSplitWrite(BTNonLeafNode& nonl, int key, PageId pid, int& midKey, PageId& siblingPid);
   RC insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid, bool& overflow, int& overflowKey, PageId& overflowPid); 
+  void printRec(PageId id, std::string offset);
  
   PageFile pf;         /// the PageFile used to store the actual b+tree in disk
 
