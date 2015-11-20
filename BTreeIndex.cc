@@ -73,6 +73,7 @@ void BTreeIndex::printRec(PageId id, string offset)
         for (int i = 0; i < nonl.getKeyCount(); i++) {
             printRec(nonl.readEntry(i), offset + " ");
         }
+		printRec(nonl.getLastId(), offset + " ");
     }
 }
 
@@ -151,7 +152,7 @@ RC BTreeIndex::insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid
             if (errorCode < 0)
                 return errorCode;
             // Attempt direct insertion of siblingKey into node
-            errorCode = node.insert(siblingKey, node.getPageId());
+            errorCode = node.insert(siblingKey, siblingPid);
             // If insertion fails, do insertAndSplit on node
             // Then, set overflow/overflowKey/overflowPid for parent to insert
             if (errorCode == RC_NODE_FULL) {
@@ -258,6 +259,30 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
     }
 }
 
+RC BTreeIndex::locateRec(PageId id, int searchKey, IndexCursor& cursor)
+{
+    char buffer[PageFile::PAGE_SIZE];
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
+    RC errorCode = pf.read(id, buffer);
+    if (errorCode < 0)
+        return errorCode;
+    int isLeaf;
+    memcpy(&isLeaf, buffer, sizeof(int));
+    if (isLeaf) {
+        BTLeafNode leaf(id);
+        leaf.read(id, pf);
+        cursor.pid = id;
+        return leaf.locate(searchKey, cursor.eid); 
+    }
+    else {
+        BTNonLeafNode nonl(id);
+        nonl.read(id, pf);
+        int nextPid;
+        nonl.locateChildPtr(searchKey, nextPid);
+        return locateRec(nextPid, searchKey, cursor);
+    }
+}
+
 /**
  * Run the standard B+Tree key search algorithm and identify the
  * leaf node where searchKey may exist. If an index entry with
@@ -278,7 +303,7 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
  */
 RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
 {
-    return 0;
+    return locateRec(rootPid, searchKey, cursor);
 }
 
 /*
@@ -291,5 +316,27 @@ RC BTreeIndex::locate(int searchKey, IndexCursor& cursor)
  */
 RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
 {
-    return 0;
+    char buffer[PageFile::PAGE_SIZE];
+    memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
+    RC errorCode = pf.read(cursor.pid, buffer);
+    if (errorCode < 0)
+        return errorCode;
+    BTLeafNode leaf(cursor.pid);
+    leaf.read(cursor.pid, pf);
+    errorCode = leaf.readEntry(cursor.eid, key, rid);
+    if (errorCode == RC_NO_SUCH_RECORD) {
+        cursor.pid = leaf.getNextLeaf();
+        cursor.eid = 0;
+        memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
+        errorCode = pf.read(cursor.pid, buffer);
+        if (errorCode < 0)
+            return errorCode;
+        BTLeafNode leafNext(cursor.pid);
+        leafNext.read(cursor.pid, pf);
+        return leafNext.readEntry(cursor.eid, key, rid);
+    }
+    else {
+        cursor.eid++;
+        return errorCode;
+    }
 }

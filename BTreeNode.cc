@@ -13,7 +13,7 @@ using namespace std;
 // Nodes may have [38, 75] keys
 // ceil(N/2) = 38
 // Non-leaf nodes may have [38, 75] keys
-#define MAX_KEYS 75
+#define MAX_KEYS 5
 
 void reportErrorExit(RC error) {
     printf("Error! Received RC code%d\n", error);
@@ -29,6 +29,10 @@ BTLeafNode::BTLeafNode(PageId id) {
 
 PageId BTLeafNode::getPageId() {
     return id;
+}
+
+PageId BTLeafNode::getNextLeaf() {
+    return nextLeaf;
 }
 
 void BTLeafNode::print(std::string offset) {
@@ -302,6 +306,10 @@ PageId BTNonLeafNode::getPageId() {
 
 void BTNonLeafNode::setLastId(PageId last) {
     lastId = last;
+}
+
+PageId BTNonLeafNode::getLastId() {
+    return lastId;
 }
 
 PageId BTNonLeafNode::readEntry(int eid) {

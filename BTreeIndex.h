@@ -95,11 +95,12 @@ class BTreeIndex {
   RC readForward(IndexCursor& cursor, int& key, RecordId& rid);
   
  private:
+  void printRec(PageId id, std::string offset);
   RC insertSplitWrite(BTLeafNode& leaf, int key, const RecordId& rid, int& siblingKey, PageId& siblingPid);
   RC insertSplitWrite(BTNonLeafNode& nonl, int key, PageId pid, int& midKey, PageId& siblingPid);
   RC insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid, bool& overflow, int& overflowKey, PageId& overflowPid); 
-  void printRec(PageId id, std::string offset);
- 
+  RC locateRec(PageId id, int searchKey, IndexCursor& cursor);
+
   PageFile pf;         /// the PageFile used to store the actual b+tree in disk
 
   PageId   rootPid;    /// the PageId of the root node

@@ -15,7 +15,7 @@ int main() {
     tree.initializeTree();
     tree.readRoot();
     RecordId rec;
-    for(int i = 0; i < 7; i++) {
+    for(int i = 0; i < 27; i++) {
         rec.pid = rand() % 1000;
         rec.sid = rand() % 1000;
         tree.insert(rand() % 10000, rec);
