@@ -98,7 +98,7 @@ RC BTreeIndex::insertSplitWrite(BTNonLeafNode& nonl, int key, PageId pid, int& m
     return 0;
 }
 
-RC BTreeIndex::insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid, int& overflowKey)
+RC BTreeIndex::insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid, bool& overflow, int& overflowKey, PageId& overflowPid)
 {
     PageId childPid;
     node.locateChildPtr(key, childPid);
@@ -109,6 +109,7 @@ RC BTreeIndex::insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid
         return errorCode;
     int isLeaf;
     memcpy(&isLeaf, buffer, sizeof(int));
+    // Leaf node case
     if (isLeaf) {
         BTLeafNode leaf(childPid);
         leaf.read(childPid, pf);
@@ -123,11 +124,15 @@ RC BTreeIndex::insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid
             // Attempt direct insertion of siblingKey into node
             errorCode = node.insert(siblingKey, node.getPageId());
             // If insertion fails, do insertAndSplit on node
-            // Then, set overflowKey for parent to insert
+            // Then, set overflow/overflowKey/overflowPid for parent to insert
             if (errorCode == RC_NODE_FULL) {
-                /* insertSplitWrite, stuff TODO*/
+                overflow = true;
+                errorCode = insertSplitWrite(node, siblingKey, siblingPid, overflowKey, overflowPid);
             }
-            return 0;
+            else if (errorCode == 0) {
+                node.write(node.getPageId(), pf);
+            }
+            return errorCode;
         }
         else if (errorCode == 0) {
             leaf.write(leaf.getPageId(), pf);
@@ -136,8 +141,29 @@ RC BTreeIndex::insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid
         else
             return 0;
     }
+    // Non-leaf node case
     else {
-        /* Non-leaf case, TODO*/
+        BTNonLeafNode nonl(childPid);
+        nonl.read(childPid, pf);
+        bool ovrfl;
+        int oKey;
+        PageId oPid;
+        // Insert recursively into subtree
+        errorCode = insertRecursive(nonl, key, rid, ovrfl, oKey, oPid);
+        if (errorCode < 0)
+            return errorCode;
+        // If insertion returned with overflow of subtree, insert into non-leaf
+        else if (ovrfl) {
+            errorCode = node.insert(oKey, oPid);
+            if (errorCode = RC_NODE_FULL) {
+                overflow = true;
+                errorCode = insertSplitWrite(node, oKey, oPid, overflowKey, overflowPid);
+            }
+            else if (errorCode == 0) {
+                node.write(node.getPageId(), pf);
+            }
+            return errorCode;
+        }
     }
 }
 
@@ -176,15 +202,30 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
         }
         else if (errorCode == 0) {
             leaf.write(leaf.getPageId(), pf);
-            return errorCode;
+            return 0;
         }
         else
-            return 0;
+            return errorCode;
     }
     else {
         BTNonLeafNode nonLeaf(rootPid);
         nonLeaf.read(rootPid, pf);
-        /* Call recursive function; case for new root here TODO*/ 
+        bool overflow;
+        int oKey;
+        PageId oPid;
+        // Insert recursively into subtree
+        errorCode = insertRecursive(nonLeaf, key, rid, overflow, oKey, oPid);
+        if (errorCode < 0)
+            return errorCode;
+        // If overflow occured, create new root
+        else if (overflow) {
+            BTNonLeafNode newRoot(pf.endPid());
+            newRoot.initializeRoot(nonLeaf.getPageId(), oKey, oPid);
+            rootPid = newRoot.getPageId();
+            newRoot.write(rootPid, pf);
+            writeRoot();
+            return 0;
+        }
     }
 }
 

@@ -96,7 +96,7 @@ class BTreeIndex {
  private:
   RC insertSplitWrite(BTLeafNode& leaf, int key, const RecordId& rid, int& siblingKey, PageId& siblingPid);
   RC insertSplitWrite(BTNonLeafNode& nonl, int key, PageId pid, int& midKey, PageId& siblingPid);
-  RC insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid, int& overflowKey); 
+  RC insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid, bool& overflow, int& overflowKey, PageId& overflowPid); 
  
   PageFile pf;         /// the PageFile used to store the actual b+tree in disk
 
