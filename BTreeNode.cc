@@ -200,7 +200,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
         recIt++;
     }
     while (keyIt != keys.end()) {
-        int errorCode = sibling.insert_end(*keyIt, *recIt);
+        RC errorCode = sibling.insert_end(*keyIt, *recIt);
         if (errorCode < 0)
             return errorCode;
         keyIt = keys.erase(keyIt);
@@ -210,7 +210,7 @@ RC BTLeafNode::insertAndSplit(int key, const RecordId& rid,
     RecordId sibRec;
     sibling.setNextNodePtr(nextLeaf);
     nextLeaf = sibling.getPageId();
-    int errorCode = sibling.readEntry(0, siblingKey, sibRec);
+    RC errorCode = sibling.readEntry(0, siblingKey, sibRec);
     if (errorCode < 0)
         return errorCode;
     return 0;
@@ -493,7 +493,7 @@ RC BTNonLeafNode::insertAndSplit(int key, PageId pid, BTNonLeafNode& sibling, in
     pageIt = pages.erase(pageIt);
     length--;
     while (keyIt != keys.end()) {
-        int errorCode = sibling.insert_end(*keyIt, *pageIt);
+        RC errorCode = sibling.insert_end(*keyIt, *pageIt);
         if (errorCode < 0)
             return errorCode;
         keyIt = keys.erase(keyIt);

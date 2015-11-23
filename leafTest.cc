@@ -10,7 +10,8 @@
 int main() {
     srand(time(NULL));
 
-    BTreeIndex tree;
+    // Test for creating
+    /*BTreeIndex tree;
     tree.open("indextest.txt", 'w');
     tree.initializeTree();
     tree.readRoot();
@@ -21,8 +22,15 @@ int main() {
         tree.insert(rand() % 10000, rec);
     }
     tree.print();
-    tree.close();
+    tree.close();*/
 
+    // Test for loading
+    BTreeIndex tree;
+    tree.open("testing.idx", 'r');
+    tree.readRoot();
+    tree.print();
+    tree.close();
+	
     /*PageFile leafPage;
     leafPage.open("testIndex.txt", 'w');
     int rootid = leafPage.endPid();
