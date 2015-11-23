@@ -53,51 +53,101 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
     return rc;
   }
 
+  bool condOnKeyEquality = false;
+  int keyMatch;
   bool condOnKeyRange = false;
   int keyMin = INT_MIN;
   int keyMax = INT_MAX;
   for (unsigned i = 0; i < cond.size(); i++) {
     if (cond[i].attr == 1) {
+      int val;
       switch (cond[i].comp) {
       case SelCond::EQ:
-        condOnKeyRange = true;
-        int val = atoi(cond[i].value);
-        if (val < keyMax) keyMax = val;
-        if (val > keyMin) keyMin = val;
+        condOnKeyEquality = true;
+        keyMatch = atoi(cond[i].value);
         break;
       case SelCond::GT:
         condOnKeyRange = true;
-        int val = atoi(cond[i].value);
+        val = atoi(cond[i].value);
         if (val+1 > keyMin) keyMin = val+1;
         break;
       case SelCond::LT: 
         condOnKeyRange = true;
-        int val = atoi(cond[i].value);
+        val = atoi(cond[i].value);
         if (val-1 < keyMax) keyMax = val-1;
         break;
       case SelCond::GE:
         condOnKeyRange = true;
-        int val = atoi(cond[i].value);
+        val = atoi(cond[i].value);
         if (val > keyMin) keyMin = val;
         break;
       case SelCond::LE:
         condOnKeyRange = true;
-        int val = atoi(cond[i].value);
+        val = atoi(cond[i].value);
         if (val < keyMax) keyMax = val;
         break;
-      }
       default:
         break;
+      }
     }
   }
 
-  BTreeIndex tree();
-  if (condOnKeyRange) {
+  BTreeIndex tree;
+  bool tryTree = false;
+  if (condOnKeyEquality || condOnKeyRange || (cond.size() == 0 && (attr == 1 || attr ==4))) {
     rc = tree.open(table + ".idx", 'r');
+    tryTree = true;
   }
   // B+ tree opened successfully, use this index for searching
-  if (rc < 0) {
-    /* TODO */
+  if (tryTree && rc == 0) {
+    tree.readRoot();
+    IndexCursor entry;
+    if (condOnKeyEquality) {
+      if ((rc = tree.locate(keyMatch, entry)) < 0) {
+        fprintf(stderr, "Error locating searchKey in B+ tree\n");
+        goto exit_index_select;
+      }
+      if ((rc = tree.readForward(entry, key, rid)) < 0) {
+        fprintf(stderr, "Error reading forward long B+ tree leaf\n");
+        goto exit_index_select;
+      }
+      bool ridRead = false;
+      for (unsigned i = 0; i < cond.size(); i++) {
+        /* TODO, compare to all */
+
+      }
+      /* TODO, final stuff like count */ 
+    }
+    else {
+      if ((rc = tree.locate(keyMin, entry)) < 0) {
+        fprintf(stderr, "Error locating searchKey in B+ tree\n");
+        goto exit_index_select;
+      }
+      if ((rc = tree.readForward(entry, key, rid)) < 0) {
+        fprintf(stderr, "Error reading forward long B+ tree leaf\n");
+        goto exit_index_select;
+      }
+      count = 0;
+      while (key <= keyMax) {
+        bool ridRead = false;
+        for (unsigned i = 0; i < cond.size(); i++) {
+          /* TODO, compare to all */
+
+        }
+        /* TODO, scan each from leaf and do stuff */
+
+        if ((rc = tree.readForward(entry, key, rid)) < 0) {
+          fprintf(stderr, "Error reading forward long B+ tree leaf\n");
+          goto exit_index_select;
+        }
+        /* TODO, final stuff like count */ 
+      }
+    }
+
+    exit_index_select:
+    rf.close();
+    tree.close();
+    return rc;
   }
   // Otherwise, use default sequential scan
   else {
@@ -173,12 +223,12 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
       fprintf(stdout, "%d\n", count);
     }
     rc = 0;
-  }
 
-  // close the table file and return
-  exit_select:
-  rf.close();
-  return rc;
+    // close the table file and return
+    exit_select:
+    rf.close();
+    return rc;
+  }
 }
 
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
