@@ -256,6 +256,8 @@ RC BTreeIndex::insert(int key, const RecordId& rid)
             writeRoot();
             return 0;
         }
+        else
+            return errorCode;
     }
 }
 

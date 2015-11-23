@@ -13,7 +13,7 @@ using namespace std;
 // Nodes may have [38, 75] keys
 // ceil(N/2) = 38
 // Non-leaf nodes may have [38, 75] keys
-#define MAX_KEYS 5
+#define MAX_KEYS 75
 
 void reportErrorExit(RC error) {
     printf("Error! Received RC code%d\n", error);

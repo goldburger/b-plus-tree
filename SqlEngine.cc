@@ -14,6 +14,7 @@
 #include <fstream>
 #include "Bruinbase.h"
 #include "SqlEngine.h"
+#include "BTreeIndex.h"
 
 using namespace std;
 
@@ -132,7 +133,6 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
 
 RC SqlEngine::load(const string& table, const string& loadfile, bool index)
 {
-    //Open a file 
     ifstream file;
     file.open(loadfile.c_str());
     if (!file.is_open())
@@ -144,23 +144,64 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
     const string recordName = table + ".tbl";
     rf.open(recordName, 'w');
 
-    //For each line of the file extract value and key and insert into 
-    //the table
-    while (getline(file, line))
-    {
-        int key;
-        string value;
-        //If parseLoadLine returns error
-        if (parseLoadLine(line, key, value) < 0 ) {
-            rf.close();
-            exit(RC_FILE_SEEK_FAILED);
+    if (index) {
+        // Open target index file
+        BTreeIndex tree;
+        const string treeName = table + ".idx";
+        tree.open(treeName, 'w');
+        tree.initializeTree();
+        tree.readRoot();
+        int inserted = 0;
+
+        //For each file line extract value and key, insert into table
+        while (getline(file, line))
+        {
+            int key;
+            string value;
+            //If parseLoadLine returns error
+            if (parseLoadLine(line, key, value) < 0 ) {
+                rf.close();
+                tree.close();
+                exit(RC_FILE_SEEK_FAILED);
+            }
+            
+            //Insert each value and key into the RecordFile table
+            RecordId rid;
+            if (rf.append(key, value, rid) < 0) {
+                rf.close();
+                tree.close();
+                exit(RC_FILE_WRITE_FAILED);
+            }
+
+            RC errorCode = tree.insert(key, rid);
+            if (errorCode < 0) {
+                rf.close();
+                tree.close();
+                exit(RC_FILE_WRITE_FAILED);
+            }
+            inserted++;
         }
-        
-        //Insert each value and key into the RecordFile table
-        RecordId lastRid = rf.endRid();
-        if (rf.append(key, value, lastRid) < 0) {
-            rf.close();
-            exit(RC_FILE_WRITE_FAILED);
+
+        tree.close();
+    }
+    else {
+        //For each file line extract value and key, insert into table
+        while (getline(file, line))
+        {
+            int key;
+            string value;
+            //If parseLoadLine returns error
+            if (parseLoadLine(line, key, value) < 0 ) {
+                rf.close();
+                exit(RC_FILE_SEEK_FAILED);
+            }
+            
+            //Insert each value and key into the RecordFile table
+            RecordId rid;
+            if (rf.append(key, value, rid) < 0) {
+                rf.close();
+                exit(RC_FILE_WRITE_FAILED);
+            }
         }
     }
     rf.close();
