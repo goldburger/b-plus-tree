@@ -327,7 +327,10 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
     leaf.read(cursor.pid, pf);
     errorCode = leaf.readEntry(cursor.eid, key, rid);
     if (errorCode == RC_NO_SUCH_RECORD) {
-        cursor.pid = leaf.getNextLeaf();
+        int nextLeafVal = leaf.getNextLeaf();
+        if (nextLeafVal == -1)
+            return RC_END_OF_TREE;
+        cursor.pid = nextLeafVal;
         cursor.eid = 0;
         memset(buffer, 0, sizeof(char) * PageFile::PAGE_SIZE);
         errorCode = pf.read(cursor.pid, buffer);

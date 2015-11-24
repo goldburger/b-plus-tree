@@ -102,24 +102,76 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
   if (tryTree && rc == 0) {
     tree.readRoot();
     IndexCursor entry;
+    count = 0;
     if (condOnKeyEquality) {
-      if ((rc = tree.locate(keyMatch, entry)) < 0) {
+      rc = tree.locate(keyMatch, entry);
+      if (rc < 0 && rc != RC_NO_SUCH_RECORD) {
         fprintf(stderr, "Error locating searchKey in B+ tree\n");
         goto exit_index_select;
       }
-      if ((rc = tree.readForward(entry, key, rid)) < 0) {
+      else if ((rc = tree.readForward(entry, key, rid)) < 0) {
         fprintf(stderr, "Error reading forward long B+ tree leaf\n");
         goto exit_index_select;
       }
-      bool ridRead = false;
-      for (unsigned i = 0; i < cond.size(); i++) {
-        /* TODO, compare to all */
+      else {
+        bool ridRead = false;
+        for (unsigned i = 0; i < cond.size(); i++) {
+          switch(cond[i].attr) {
+          case 1:
+            diff = key - atoi(cond[i].value);
+            break;
+          case 2:
+            if (ridRead == false) {
+              if ((rc = rf.read(rid, key, value)) < 0) {
+                fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+                goto exit_index_select;
+              }
+              ridRead = true;
+            }
+            diff = strcmp(value.c_str(), cond[i].value);
+            break;
+          }
 
+          switch (cond[i].comp) {
+          case SelCond::EQ:
+            if (diff != 0) goto section_end;
+            break;
+          case SelCond::NE:
+            if (diff == 0) goto section_end;
+            break;
+          case SelCond::GT:
+            if (diff <= 0) goto section_end;
+            break;
+          case SelCond::LT:
+            if (diff >= 0) goto section_end;
+            break;
+          case SelCond::GE:
+            if (diff < 0) goto section_end;
+            break;
+          case SelCond::LE:
+            if (diff > 0) goto section_end;
+            break;
+          }
+        }
+        count++;
+        switch (attr) {
+        case 1:
+          fprintf(stdout, "%d\n", key);
+          break;
+        case 2:
+          fprintf(stdout, "%s\n", value.c_str());
+          break;
+        case 3:
+          fprintf(stdout, "%d '%s'\n", key, value.c_str());
+          break;
+        }
+
+        section_end: ;
       }
-      /* TODO, final stuff like count */ 
     }
     else {
-      if ((rc = tree.locate(keyMin, entry)) < 0) {
+      rc = tree.locate(keyMin, entry);
+      if (rc < 0 && rc != RC_NO_SUCH_RECORD) {
         fprintf(stderr, "Error locating searchKey in B+ tree\n");
         goto exit_index_select;
       }
@@ -127,22 +179,74 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         fprintf(stderr, "Error reading forward long B+ tree leaf\n");
         goto exit_index_select;
       }
-      count = 0;
       while (key <= keyMax) {
         bool ridRead = false;
         for (unsigned i = 0; i < cond.size(); i++) {
-          /* TODO, compare to all */
+          switch(cond[i].attr) {
+          case 1:
+            diff = key - atoi(cond[i].value);
+            break;
+          case 2:
+            if (ridRead == false) {
+              if ((rc = rf.read(rid, key, value)) < 0) {
+                fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+                goto exit_index_select;
+              }
+              ridRead = true;
+            }
+            diff = strcmp(value.c_str(), cond[i].value);
+            break;
+          }
 
+         switch (cond[i].comp) {
+          case SelCond::EQ:
+            if (diff != 0) goto index_next_tuple;
+            break;
+          case SelCond::NE:
+            if (diff == 0) goto index_next_tuple;
+            break;
+          case SelCond::GT:
+            if (diff <= 0) goto index_next_tuple;
+            break;
+          case SelCond::LT:
+            if (diff >= 0) goto index_next_tuple;
+            break;
+          case SelCond::GE:
+            if (diff < 0) goto index_next_tuple;
+            break;
+          case SelCond::LE:
+            if (diff > 0) goto index_next_tuple;
+            break;
+          }
         }
-        /* TODO, scan each from leaf and do stuff */
+        count++;
+        switch (attr) {
+        case 1:
+          fprintf(stdout, "%d\n", key);
+          break;
+        case 2:
+          fprintf(stdout, "%s\n", value.c_str());
+          break;
+        case 3:
+          fprintf(stdout, "%d '%s'\n", key, value.c_str());
+          break;
+        }
 
-        if ((rc = tree.readForward(entry, key, rid)) < 0) {
+        index_next_tuple:
+        rc = tree.readForward(entry, key, rid);
+        if (rc == RC_END_OF_TREE) {
+          break;
+        }
+        else if (rc < 0) {
           fprintf(stderr, "Error reading forward long B+ tree leaf\n");
           goto exit_index_select;
         }
-        /* TODO, final stuff like count */ 
       }
     }
+    if (attr == 4) {
+      fprintf(stdout, "%d\n", count);
+    }
+    rc = 0;
 
     exit_index_select:
     rf.close();
