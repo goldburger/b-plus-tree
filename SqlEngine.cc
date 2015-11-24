@@ -159,9 +159,23 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           fprintf(stdout, "%d\n", key);
           break;
         case 2:
+          if (ridRead == false) {
+            if ((rc = rf.read(rid, key, value)) < 0) {
+              fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+              goto exit_index_select;
+            }
+            ridRead = true;
+          }
           fprintf(stdout, "%s\n", value.c_str());
           break;
         case 3:
+          if (ridRead == false) {
+            if ((rc = rf.read(rid, key, value)) < 0) {
+              fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+              goto exit_index_select;
+            }
+            ridRead = true;
+          }
           fprintf(stdout, "%d '%s'\n", key, value.c_str());
           break;
         }
@@ -225,9 +239,23 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
           fprintf(stdout, "%d\n", key);
           break;
         case 2:
+          if (ridRead == false) {
+            if ((rc = rf.read(rid, key, value)) < 0) {
+              fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+              goto exit_index_select;
+            }
+            ridRead = true;
+          }
           fprintf(stdout, "%s\n", value.c_str());
           break;
         case 3:
+          if (ridRead == false) {
+            if ((rc = rf.read(rid, key, value)) < 0) {
+              fprintf(stderr, "Error: while reading a tuple from table %s\n", table.c_str());
+              goto exit_index_select;
+            }
+            ridRead = true;
+          }
           fprintf(stdout, "%d '%s'\n", key, value.c_str());
           break;
         }
