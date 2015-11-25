@@ -338,6 +338,7 @@ RC BTreeIndex::readForward(IndexCursor& cursor, int& key, RecordId& rid)
             return errorCode;
         BTLeafNode leafNext(cursor.pid);
         leafNext.read(cursor.pid, pf);
+		cursor.eid++;
         return leafNext.readEntry(cursor.eid, key, rid);
     }
     else {

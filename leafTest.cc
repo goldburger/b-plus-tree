@@ -26,7 +26,7 @@ int main() {
 
     // Test for loading
     BTreeIndex tree;
-    tree.open("testing.idx", 'r');
+    tree.open("medium.idx", 'r');
     tree.readRoot();
     tree.print();
     tree.close();

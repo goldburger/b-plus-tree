@@ -190,7 +190,7 @@ RC SqlEngine::select(int attr, const string& table, const vector<SelCond>& cond)
         goto exit_index_select;
       }
       if ((rc = tree.readForward(entry, key, rid)) < 0) {
-        fprintf(stderr, "Error reading forward long B+ tree leaf\n");
+        fprintf(stderr, "Error reading forward along B+ tree leaf\n");
         goto exit_index_select;
       }
       while (key <= keyMax) {
