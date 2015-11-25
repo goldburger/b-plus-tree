@@ -437,6 +437,7 @@ RC SqlEngine::load(const string& table, const string& loadfile, bool index)
         }
     }
     rf.close();
+	file.close();
     return 0;
 }
 
