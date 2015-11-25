@@ -23,8 +23,8 @@ using namespace std;
 BTreeIndex::BTreeIndex()
 {
     rootPid = -1;
-	PageFile newpf;
-	pf = newpf;
+    PageFile newpf;
+    pf = newpf;
 }
 
 RC BTreeIndex::writeRoot()
@@ -177,7 +177,7 @@ RC BTreeIndex::insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid
     else {
         BTNonLeafNode nonl(childPid);
         nonl.read(childPid, pf);
-        bool ovrfl;
+        bool ovrfl = false;
         int oKey;
         PageId oPid;
         // Insert recursively into subtree
