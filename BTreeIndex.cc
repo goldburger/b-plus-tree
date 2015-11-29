@@ -187,7 +187,7 @@ RC BTreeIndex::insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid
         // If insertion returned with overflow of subtree, insert into non-leaf
         else if (ovrfl) {
             errorCode = node.insert(oKey, oPid);
-            if (errorCode = RC_NODE_FULL) {
+            if (errorCode == RC_NODE_FULL) {
                 overflow = true;
                 errorCode = insertSplitWrite(node, oKey, oPid, overflowKey, overflowPid);
             }
@@ -196,6 +196,8 @@ RC BTreeIndex::insertRecursive(BTNonLeafNode& node, int key, const RecordId& rid
             }
             return errorCode;
         }
+        else
+            return errorCode;
     }
 }
 
